@@ -581,7 +581,7 @@ y = h(a)
 
 ```python
 import numpy as np
-def step_function(x):
+def StepFunction(x):
     y = x>0
     return y.astype(np.int) 
     #astype은 데이터 타입을 바꿔주는 함수. 
@@ -604,11 +604,11 @@ def step_function(x):
 import matplotlib.pylab as plt
 import numpy as np
 
-def step_function(x):
+def StepFunction(x):
     return np.array(x>0, dtype = np.int) #이렇게도 표현할 수 있다
 
 x = np.arange(-5.0, 5.0, 0.1) #-5부터 5까지 0.1간격
-y = step_function(x) #배열 x를 각각 계단 함수로 실행해 출력값들을 y에 넣음
+y = StepFunction(x) #배열 x를 각각 계단 함수로 실행해 출력값들을 y에 넣음
 plt.plot(x,y)
 plt.ylim(-0.1,1.1) #y축의 범위 지정.
 plt.show()
@@ -632,11 +632,11 @@ plt.show()
 ```python
 import numpy as np
 
-def sigmoid(x):
+def Sigmoid(x):
     return 1/(1+np.exp(-x))
 
 t = np.array([-1.0,1.0,2.0])
-print(sigmoid(t)) #[0.26894142 0.73105858 0.88079709]
+print(Sigmoid(t)) #[0.26894142 0.73105858 0.88079709]
 
 t = np.array([1.0,2.0,3.0])
 print(1.0 + t) #[2. 3. 4.]
@@ -649,11 +649,11 @@ print(1.0 / t) #[1. 0.5 0.33333333]
 import matplotlib.pylab as plt
 import numpy as np
 
-def sigmoid(x):
+def Sigmoid(x):
     return 1/(1+np.exp(-x))
 
 x = np.arange(-5.0, 5.0, 0.1)
-y = sigmoid(x)
+y = Sigmoid(x)
 plt.plot(x,y)
 plt.ylim(-0.1, 1.1)
 plt.show()
@@ -701,11 +701,11 @@ h(x) = (x > 0) ? x : 0
 ```python
 import numpy as np
 
-def leru(x):
+def Relu(x):
     return np.maximum(0,x)
 
-print(leru(-1)) #0
-print(leru(1)) #1
+print(Relu(-1)) #0
+print(Relu(1)) #1
 ```
 
 <br><br><br>
@@ -809,19 +809,19 @@ print(Y)    #[ 5 11 17]
 import matplotlib.pylab as plt
 import numpy as np
 
-def sigmoid(x):
+def Sigmoid(x):
     return 1/(1+np.exp(-x))
 
 X = np.array([1.0,0.5]) #입력 신호
 W1 = np.array([0.1,0.3,0.5],[0.2,0.4,0.6]) #0->1층의 가중치
 B1 = np.array([0.1,0.2,0.3]) #0->1층의 편향
 A1 = np.dot(X,W1)+B1 #1층으로 들어오는 값
-Z1 = sigmoid(A1) #1층에서 활성화 함수를 거친 값이자 2층으로 건네주는 값
+Z1 = Sigmoid(A1) #1층에서 활성화 함수를 거친 값이자 2층으로 건네주는 값
 
 W2 = np.array([0.1,0.4],[0.2,0.5],[0.3,0.6]) #1->2층의 가중치
 B2 = np.array([0.1,0.2]) #1->2층의 편향
 A2 = np.dot(Z1,W2)+B2 #2층으로 들어오는 값
-Z2 = sigmoid(A2) #2층에서 활성화 함수를 거친 값이자 3층으로 건네주는 값
+Z2 = Sigmoid(A2) #2층에서 활성화 함수를 거친 값이자 3층으로 건네주는 값
 
 W3 = np.array([0.1,0.3],[0.2,0.4]) #2->3층의 가중치
 B3 = np.array([0.1,0.2]) #2->3층의 편향
@@ -840,10 +840,10 @@ Y = A3 #출력층에서는 활성화함수가 없으니 그대로 출력.
 ```python
 import numpy as np
 
-def sigmoid(x):
+def Sigmoid(x):
     return 1/(1+np.exp(-x))
 
-def init_network(): #가중치와 편향을 초기화하고, 딕셔너리 변수 network에 저장
+def InitNetwork(): #가중치와 편향을 초기화하고, 딕셔너리 변수 network에 저장
     network={} #각 층에 필요한 매개변수(가중치와 편향)을 저장
     network['W1'] = np.array([[0.1,0.3,0.5],[0.2,0.4,0.6]])
     network['b1'] = np.array([0.1,0.2,0.3])
@@ -853,21 +853,21 @@ def init_network(): #가중치와 편향을 초기화하고, 딕셔너리 변수
     network['b3'] = np.array([0.1,0.2])
     return network
 
-def forward(network, x): #입력 신호를 출력으로 변환하는 처리 과정을 모두 구현
+def Forward(network, x): #입력 신호를 출력으로 변환하는 처리 과정을 모두 구현
     W1, W2, W3 = network['W1'],network['W2'],network['W3']
     b1, b2, b3 = network['b1'],network['b2'],network['b3']
 
     a1 = np.dot(x,W1)+b1
-    z1 = sigmoid(a1)
+    z1 = Sigmoid(a1)
     a2 = np.dot(z1,W2)+b2
-    z2 = sigmoid(a2)
+    z2 = Sigmoid(a2)
     a3 = np.dot(z2,W3)+b3
     
     return a3
 
-network = init_network()
+network = InitNetwork()
 x = np.array([1.0,0.5])
-y = forward(network,x)
+y = Forward(network,x)
 print(y) #[0.31682708 0.69627909]
 ```
 
@@ -893,9 +893,9 @@ n은 출력 층의 뉴런 수, y_k는 k번째 출력을 뜻한다.
 import numpy as np
 
 def softmax(a):
-    exp_a = np.exp(a) #각 항목을 지수함수화
-    sum_exp_a = np.sum(exp_a) #각 항목의 합을 저장
-    y = exp_a / sum_exp_a #각 항목에 그 항목들의 합을 나눠줌
+    expA = np.exp(a) #각 항목을 지수함수화
+    sumExpA = np.sum(expA) #각 항목의 합을 저장
+    y = expA / sumExpA #각 항목에 그 항목들의 합을 나눠줌
     return y
 
 a = np.array([0.3,2.9,4.0])
@@ -913,9 +913,9 @@ import numpy as np
 
 def softmax(a):
     c = np.max(a) #오버플로우를 막기 위한 최대값
-    exp_a = np.exp(a - c) #오버플로우의 대책으로 -c를 넣는다.
-    sum_exp_a = np.sum(exp_a) #각 항목의 합을 저장
-    y = exp_a / sum_exp_a #각 항목에 그 항목들의 합을 나눠줌
+    expA = np.exp(a - c) #오버플로우의 대책으로 -c를 넣는다.
+    sumExpA = np.sum(expA) #각 항목의 합을 저장
+    y = expA / sumExpA #각 항목에 그 항목들의 합을 나눠줌
     return y
 
 a = np.array([1100,1000,900])
@@ -938,3 +938,144 @@ print(softmax(a)) #[1.00000000e+00 3.72007598e-44 1.38389653e-87]
 분류 문제에서는 분류 분류하고픈 클래스의 수로 설정하는 것이 일반적이다.  
 숫자를 0~9로 분류하는 문제라면 출력층의 뉴런을 10개로 설정하는 식이다.  
 
+<br><br><br>
+
+# 손글씨 숫자 인식
+
+이미 학습된 매개변수를 사용해 학습은 생략하고 추론만 구현할 것.  
+이런 추론 과정을 신경망의 순전파라고 한다.  
+
+
+## MNIST 데이터 셋
+
+MNIST는 손글씨 숫자 이미지 집합으로, 기계학습 분야에서 유명한 데이터셋이다.  
+0부터 9까지의 숫자 이미지가 있는데, 훈련 이미지가 60,000장, 시험 이미지가 10,000장 준비되어 있다.  
+
+```python
+import urllib.request
+import sys
+import os.path
+import gzip
+import pickle
+import os
+import numpy as np
+
+urlBase = 'http://yann.lecun.com/exdb/mnist/' #mnist가 있는 url
+keyFile = {
+    'trainImg':'train-images-idx3-ubyte.gz', #트레이닝 세트 이미지
+    'trainLabel':'train-labels-idx1-ubyte.gz', #트레이닝 세트 라벨
+    'testImg':'t10k-images-idx3-ubyte.gz', #테스트 세트 이미지
+    'testLabel':'t10k-labels-idx1-ubyte.gz' #테스트 세트 라벨
+}
+datasetDirectory = os.path.dirname(os.path.abspath(__file__))
+#os.path.abspath(__file__) : 이 코드가 적힌 파일의 절대경로
+#os.path.dirname(path) : 경로 path의 디렉토리 명을 리턴한다
+
+saveFile = datasetDirectory + "/mnist.pkl"
+
+imgSize = 784
+
+def Download(fileName):
+    filePath = datasetDirectory + "/" + fileName
+    if os.path.exists(filePath): #경로가 존재하면 True 반환
+        return
+    print("Downloading "+fileName)
+    print(urlBase)
+    print(fileName)
+    print(filePath)
+    urllib.request.urlretrieve(urlBase + fileName, filePath) #파일을 다운로드 받는 함수. 인수는 다운 받을 파일이 있는 url, 저장명과 
+    print("Download Done")
+
+def DownloadMnist():
+    for i in keyFile.values():
+        Download(i)
+
+def LoadImg(fileName):
+    filePath = datasetDirectory + "/" + fileName
+    print("Convert " + fileName+" to Numpy")
+    with gzip.open(filePath, 'rb') as f: #with는 블록 단위 프로세스의 시작과 끝에 대한 처리를 해준다.
+        data = np.frombuffer(f.read(),np.uint8,offset=16) #f로 읽어오는 데이터를 numpy unsigned int8 list로 변환
+    data = data.reshape(-1, imgSize) #n-Dim 배열의 shape를 재설정, -1은 다른 나머지 차원 크기를 맞추고 남은 크기를 해당 차원에 할당한다는 의미. 즉, imgSize만큼 할당한 후 남는 차원을 -1 부분에 할당한다.
+    print("Done")
+    return data
+
+def LoadLabel(fileName):
+    filePath = datasetDirectory + "/" + fileName
+    print("Convert " + fileName+" to Numpy")
+    with gzip.open(filePath, 'rb') as f: #with는 블록 단위 프로세스의 시작과 끝에 대한 처리를 해준다.
+        data = np.frombuffer(f.read(),np.uint8,offset=8) #f로 읽어오는 데이터를 numpy unsigned int8 list로 변환
+    print("Done")
+    return data
+
+def ConvertNumpy():
+    dataset = {}
+    dataset['trainImg'] = LoadImg(keyFile['trainImg'])
+    dataset['testImg'] = LoadImg(keyFile['testImg'])
+    dataset['testLabel'] = LoadLabel(keyFile['testLabel'])
+    dataset['trainLabel'] = LoadLabel(keyFile['trainLabel'])
+    return dataset
+
+
+def InitMnist():
+    DownloadMnist()
+    dataset = ConvertNumpy()
+    print("Create Pickle")
+    with open(saveFile, 'wb') as f:
+        pickle.dump(dataset,f,-1) #피클 파일을 입력하는 코드. 인수는 데이터, 파일이다.
+    print("Done")
+
+def ChangeOneHotLabel(X):
+    T = np.zeros((X.size,10))
+    for idx, row in enumerate(T):
+        row[X[idx]] = 1
+    return T
+
+def LoadMnist(normalize = True, flatten = True, oneHotLabel = False):
+    if not os.path.exists(saveFile):
+        InitMnist()
+    
+    with open(saveFile, 'rb') as f:
+        dataset = pickle.load(f)
+    
+    if normalize: # 이미지의 픽셀 값을 0.0~1.0 사이의 값으로 정규화.
+        for key in ('trainImg', 'testImg'):
+            dataset[key] = dataset[key].astype(np.float32)
+            dataset[key] /= 255.0
+
+    if oneHotLabel: #레이블을 원-핫 배열로 돌려줌. 한 원소만 1인 배열이라고 보면 된다.
+        dataset['trainLabel'] = ChangeOneHotLabel(dataset['trainLabel'])
+        dataset['testLabel'] = ChangeOneHotLabel(dataset['testLabel'])
+
+    if not flatten: #입력 이미지를 1차원 배열로 만들지를 정함.
+        for key in ('trainImg', 'testImg'):
+            dataset[key] = dataset[key].reshape(-1,1,28,28)
+    
+    return (dataset['trainImg'], dataset['trainLabel']), (dataset['testImg'], dataset['testLabel'])
+
+(x_train, t_train), (x_test,t_test) = LoadMnist(False, True, False)
+
+print(x_train.shape) #(60000, 784)
+print(t_train.shape) #(60000,)
+print(x_test.shape) #(10000, 784)
+print(t_test.shape) #(10000,)
+```
+
+MNIST 데이터 셋을 다운받아 피클 파일로 만들어주는 코드.  
+여기서 피클 파일이란 특정 객체를 실행 당시의 모습으로 저장하는 파일로, 실행 당시의 객체를 그대로 복원하여 불러올 수 있다.  
+
+LoadMnist 함수의 인수를 보면 3가지가 있는데,  
+
+normalize는 True시 픽셀의 값을 0.0~1.0으로, False시 0~255로 둔다.  
+
+flatten은 입력 이미지를 평탄화하여 1차원 배열로 저장할 지를 가른다.  
+True시 1x28x28의 3차원 배열로, False시 784개의 원소를 가진 1차원 배열로 저장한다.  
+
+OneHotLabel은 레이블을 One-Hot Encoding 형태로 저장하는데 정답을 뜻하는 원소 하나만 1.0이고 나머지는 0.0인 배열로 출력한다.  
+
+이제 다음으로 MNIST 데이터 중 이미지를 화면으로 불러와보자.  
+
+
+
+
+<br><br><br><br><br>
+[맨 위로](#목차)
