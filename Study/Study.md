@@ -66,7 +66,10 @@
 [15-2. 소프트맥스 함수의 특징](#소프트맥스-함수의-특징)  
 [15-3. 출력층의 뉴런 수 정하기](#출력층의-뉴런-수-정하기)  
 
-
+[16. 손글씨 숫자 인식](#손글씨-숫자-인식)  
+[16-1. MNIST 데이터 셋](#MNIST-데이터-셋)  
+[16-2. 신경망의 추론 처리](#신경망의-추론-처리)  
+[16-3. 배치 처리](#배치-처리)  
 
 
 # 머신러닝의 유형
@@ -1052,12 +1055,12 @@ def LoadMnist(normalize = True, flatten = True, oneHotLabel = False):
     
     return (dataset['trainImg'], dataset['trainLabel']), (dataset['testImg'], dataset['testLabel'])
 
-(x_train, t_train), (x_test,t_test) = LoadMnist(False, True, False)
+(xTrain, tTrain), (xTest,tTest) = LoadMnist(False, True, False)
 
-print(x_train.shape) #(60000, 784)
-print(t_train.shape) #(60000,)
-print(x_test.shape) #(10000, 784)
-print(t_test.shape) #(10000,)
+print(xTrain.shape) #(60000, 784)
+print(tTrain.shape) #(60000,)
+print(xTest.shape) #(10000, 784)
+print(tTest.shape) #(10000,)
 ```
 
 MNIST 데이터 셋을 다운받아 피클 파일로 만들어주는 코드.  
@@ -1074,6 +1077,312 @@ OneHotLabel은 레이블을 One-Hot Encoding 형태로 저장하는데 정답을
 
 이제 다음으로 MNIST 데이터 중 이미지를 화면으로 불러와보자.  
 
+```python
+import urllib.request
+import sys
+import os.path
+import gzip
+import pickle
+import os
+import numpy as np
+from PIL import Image
+
+urlBase = 'http://yann.lecun.com/exdb/mnist/' #mnist가 있는 url
+keyFile = {
+    'trainImg':'train-images-idx3-ubyte.gz', #트레이닝 세트 이미지
+    'trainLabel':'train-labels-idx1-ubyte.gz', #트레이닝 세트 라벨
+    'testImg':'t10k-images-idx3-ubyte.gz', #테스트 세트 이미지
+    'testLabel':'t10k-labels-idx1-ubyte.gz' #테스트 세트 라벨
+}
+datasetDirectory = os.path.dirname(os.path.abspath(__file__))
+#os.path.abspath(__file__) : 이 코드가 적힌 파일의 절대경로
+#os.path.dirname(path) : 경로 path의 디렉토리 명을 리턴한다
+
+saveFile = datasetDirectory + "/mnist.pkl"
+
+imgSize = 784
+
+def Download(fileName):
+    filePath = datasetDirectory + "/" + fileName
+    if os.path.exists(filePath): #경로가 존재하면 True 반환
+        return
+    print("Downloading "+fileName)
+    print(urlBase)
+    print(fileName)
+    print(filePath)
+    urllib.request.urlretrieve(urlBase + fileName, filePath) #파일을 다운로드 받는 함수. 인수는 다운 받을 파일이 있는 url, 저장명과 
+    print("Download Done")
+
+def DownloadMnist():
+    for i in keyFile.values():
+        Download(i)
+
+def LoadImg(fileName):
+    filePath = datasetDirectory + "/" + fileName
+    print("Convert " + fileName+" to Numpy")
+    with gzip.open(filePath, 'rb') as f: #with는 블록 단위 프로세스의 시작과 끝에 대한 처리를 해준다.
+        data = np.frombuffer(f.read(),np.uint8,offset=16) #f로 읽어오는 데이터를 numpy unsigned int8 list로 변환
+    data = data.reshape(-1, imgSize) #n-Dim 배열의 shape를 재설정, -1은 다른 나머지 차원 크기를 맞추고 남은 크기를 해당 차원에 할당한다는 의미. 즉, imgSize만큼 할당한 후 남는 차원을 -1 부분에 할당한다.
+    print("Done")
+    return data
+
+def LoadLabel(fileName):
+    filePath = datasetDirectory + "/" + fileName
+    print("Convert " + fileName+" to Numpy")
+    with gzip.open(filePath, 'rb') as f: #with는 블록 단위 프로세스의 시작과 끝에 대한 처리를 해준다.
+        data = np.frombuffer(f.read(),np.uint8,offset=8) #f로 읽어오는 데이터를 numpy unsigned int8 list로 변환
+    print("Done")
+    return data
+
+def ConvertNumpy():
+    dataset = {}
+    dataset['trainImg'] = LoadImg(keyFile['trainImg'])
+    dataset['testImg'] = LoadImg(keyFile['testImg'])
+    dataset['testLabel'] = LoadLabel(keyFile['testLabel'])
+    dataset['trainLabel'] = LoadLabel(keyFile['trainLabel'])
+    return dataset
+
+
+def InitMnist():
+    DownloadMnist()
+    dataset = ConvertNumpy()
+    print("Create Pickle")
+    with open(saveFile, 'wb') as f:
+        pickle.dump(dataset,f,-1) #피클 파일을 입력하는 코드. 인수는 데이터, 파일이다.
+    print("Done")
+
+def ChangeOneHotLabel(X):
+    T = np.zeros((X.size,10))
+    for idx, row in enumerate(T):
+        row[X[idx]] = 1
+    return T
+
+def LoadMnist(normalize = True, flatten = True, oneHotLabel = False):
+    if not os.path.exists(saveFile):
+        InitMnist()
+    
+    with open(saveFile, 'rb') as f:
+        dataset = pickle.load(f)
+    
+    if normalize: # 이미지의 픽셀 값을 0.0~1.0 사이의 값으로 정규화.
+        for key in ('trainImg', 'testImg'):
+            dataset[key] = dataset[key].astype(np.float32)
+            dataset[key] /= 255.0
+
+    if oneHotLabel: #레이블을 원-핫 배열로 돌려줌. 한 원소만 1인 배열이라고 보면 된다.
+        dataset['trainLabel'] = ChangeOneHotLabel(dataset['trainLabel'])
+        dataset['testLabel'] = ChangeOneHotLabel(dataset['testLabel'])
+
+    if not flatten: #입력 이미지를 1차원 배열로 만들지를 정함.
+        for key in ('trainImg', 'testImg'):
+            dataset[key] = dataset[key].reshape(-1,1,28,28)
+    
+    return (dataset['trainImg'], dataset['trainLabel']), (dataset['testImg'], dataset['testLabel'])
+
+
+def ImgShow(img):
+    pilImg = Image.fromarray(np.uint8(img)) #numpy로 저장된 이미지 데이터를 PIL용 데이터 객체로 변환
+    pilImg.show()
+
+(xTrain, tTrain), (xTest,tTest) = LoadMnist(False,True,False)
+
+img = xTrain[0]
+label = tTrain[0]
+print(label) #5
+
+print(img.shape) #(784,)
+img = img.reshape(28,28) #1차원 배열을 28x28로 변환
+print(img.shape) #(28, 28)
+ImgShow(img)
+```
+
+flatten True로 읽어들인 이미지는 1차원 넘파이 배열로 저장되어 있기 때문에 이미지를 표시할 때는 28x28로 변환하여야 한다.
+
+
+여기서 위 코드와 그 위의 코드 중 중복되는 부분을 loadMnist.py라는 파일로 저장하자.
+그 다음 거기서 코드를 불러오는 식으로 사용한다면
+
+```python
+import sys
+import os
+import numpy as np
+from PIL import Image
+from loadMnist import LoadMnist #loadMnist라는 파일에서 LoadMnist 함수를 불러옴.
+
+def ImgShow(img):
+    pilImg = Image.fromarray(np.uint8(img)) #numpy로 저장된 이미지 데이터를 PIL용 데이터 객체로 변환
+    pilImg.show()
+
+(xTrain, tTrain), (xTest,tTest) = LoadMnist(False,True,False)
+
+img = xTrain[0]
+label = tTrain[0]
+print(label) #5
+
+print(img.shape) #(784,)
+img = img.reshape(28,28) #1차원 배열을 28x28로 변환
+print(img.shape) #(28, 28)
+ImgShow(img)
+```
+
+식으로 줄여서 쓸 수 있다.
+
+
+## 신경망의 추론 처리
+
+MNIST 데이터셋으로 추론을 수행하는 신경망을 구현하자.  
+신경망은 입력층 784개, 출력층 10개로 구현할 계획인데, 입력층이 784개인 건 이미지의 크기가 28x28 = 784개이기 때문이다.  
+추력층이 10개인 건 수가 0~9까지로 구분되기 때문이다.  
+은닉층은 총 두 개로, 첫 은닉층은 50개의 뉴런을, 다음 은닉층은 100개의 뉴런을 배치한다. 여기서 50, 100은 임의의 수이다.  
+
+이번엔 책에서 제공하는, 미리 학습된 가중치 매개편수 데이터 sample_weight.pkl을 받아 사용한다.  
+가중치와 편향 매개변수가 딕셔너리 변수로 저장되어있다.
+
+```python
+import sys
+import os
+import numpy as np
+import pickle
+from PIL import Image
+from loadMnist import LoadMnist
+
+def Sigmoid(x):
+    return 1/(1+np.exp(-x))
+
+def Softmax(a):
+    c = np.max(a) #오버플로우를 막기 위한 최대값
+    expA = np.exp(a - c) #오버플로우의 대책으로 -c를 넣는다.
+    sumExpA = np.sum(expA) #각 항목의 합을 저장
+    y = expA / sumExpA #각 항목에 그 항목들의 합을 나눠줌
+    return y
+
+def GetData(): #LoadMnist에서 Normalize를 True로 설정. 0~255를 0.0~1.0으로 정규화하는 전처리를 거침.
+    (xTrain, tTrain), (xTest, tTest) = LoadMnist(True, True, False)
+    return xTest, tTest
+
+def InitNetwork():
+    with open("sample_weight.pkl", 'rb') as f:
+        network = pickle.load(f)
+    return network
+
+def Predict(network, x):
+    W1, W2, W3 = network['W1'], network['W2'], network['W3']
+    b1, b2, b3 = network['b1'], network['b2'], network['b3']
+    a1 = np.dot(x,W1)+b1
+    z1 = Sigmoid(a1)
+    a2 = np.dot(z1, W2)+b2
+    z2 = Sigmoid(a2)
+    a3 = np.dot(z2, W3)+b3
+    y = Softmax(a3)
+    return y
+
+x, t = GetData()
+network = InitNetwork()
+
+accuracyCount = 0
+for i in range(len(x)): 
+    y = Predict(network, x[i]) #for을 돌며 x에 저장된 이미지 데이터를 1장씩 predict 함수를 이용하여 분류
+    p = np.argmax(y) #argmax를 이용해 배열에서 가장 값이 큰 = 확률이 높은 원소의 인덱스, 즉 예측 결과를 구함
+    if p == t[i]:
+        accuracyCount += 1 #정답을 확인하여 정답인 경우에는 카운트를 더함. 정확도를 구하는데에 사용.
+
+print("Accuracy : "+str(float(accuracyCount)/len(x))) #Accuracy : 0.9352
+```
+
+현재 정확도는 93.52%이다.
+
+
+## 배치 처리
+
+구현을 더 나가기 전에 바로 윗 단락의 구현에서 입력 데이터와 가중치 매개변수의 형상을 집중적으로 보며 조금 전의 구현을 검토해보자.  
+
+위 코드에서 각 층의 가중치 형상을 보면 다음과 같다.  
+
+```python
+x, t = GetData()
+print(x.shape) #(10000, 784)
+print(x[0].shape) #(784,)
+network = InitNetwork()
+W1, W2, W3 = network['W1'], network['W2'], network['W3']
+print(W1.shape) #(784, 50)
+print(W2.shape) #(50, 100)
+print(W3.shape) #(100, 10)
+```
+
+다차원 배열에서 대응하는 차원의 원소 수가 일치함을 볼 수 있다.  
+X 784
+W1 784x50
+W2 50x100
+W3 100x10
+Y 10
+
+의 배열 형상을 가지는 셈이다.  
+
+지금은 1장의 그림의 경우지만, 만약 100장의 그림을 한 번에 넘긴다면 위의 X를 100x784로만 바꾸면 될 것이다.  
+여기서 X는 1x784에서 100x784로 바뀌는 것이라 생각하자.  
+대신 그렇게 된다면 Y는 10이 아닌 100x10이 되는 것을 명심해야 한다.  
+이는 Y를 출력할 때, 100장 분량 입력 데이터의 결과가 한 번에 출력됨을 의미한다.  
+x[n]과 y[n]은 n번째 이미지와 그 추론 결과가 나타나는 셈이다.  
+
+이렇게 하나로 묶은 입력 데이터를 배치(batch)라고 부른다.  
+
+수치 계산 라이브러리의 대부분이 큰 배열을 효율적으로 처리할 수 있도록 최적화되어있기 때문에 배치 처리를 하면 이미지 1장당 처리 시간을 대폭 줄여주며 데이터 전송 중 버스에 주는 부하를 줄여 병목현상을 완화시킬 수 있다.  
+
+앞에서 짠 코드를 이렇게 배치처리 하는 방식으로 변경해보자.  
+
+```python
+import sys
+import os
+import numpy as np
+import pickle
+from PIL import Image
+from loadMnist import LoadMnist
+
+def Sigmoid(x):
+    return 1/(1+np.exp(-x))
+
+def Softmax(a):
+    c = np.max(a) #오버플로우를 막기 위한 최대값
+    expA = np.exp(a - c) #오버플로우의 대책으로 -c를 넣는다.
+    sumExpA = np.sum(expA) #각 항목의 합을 저장
+    y = expA / sumExpA #각 항목에 그 항목들의 합을 나눠줌
+    return y
+
+def GetData(): #LoadMnist에서 Normalize를 True로 설정. 0~255를 0.0~1.0으로 정규화하는 전처리를 거침.
+    (xTrain, tTrain), (xTest, tTest) = LoadMnist(True, True, False)
+    return xTest, tTest
+
+def InitNetwork():
+    with open("sample_weight.pkl", 'rb') as f:
+        network = pickle.load(f)
+    return network
+
+def Predict(network, x):
+    W1, W2, W3 = network['W1'], network['W2'], network['W3']
+    b1, b2, b3 = network['b1'], network['b2'], network['b3']
+    a1 = np.dot(x,W1)+b1
+    z1 = Sigmoid(a1)
+    a2 = np.dot(z1, W2)+b2
+    z2 = Sigmoid(a2)
+    a3 = np.dot(z2, W3)+b3
+    y = Softmax(a3)
+    return y
+
+x, t = GetData()
+network = InitNetwork()
+
+batchSize = 100 #배치 크기
+accuracyCount = 0
+
+for i in range(0, len(x), batchSize): #range(start,end,step) => start에서 end-1까지 step간격으로 증가
+    xBatch = x[i:i+batchSize] #x[i:i+batchSize] => x를 i번째부터 i+batchSize번째까지 묶는다
+    yBatch = Predict(network, xBatch)
+    p = np.argmax(yBatch,axis=1) #100x10의 배열 중 axis가 1이므로, 첫 차원인 0번째 차원을 축으로 최대값의 인덱스를 찾도록 한다
+    accuracyCount += np.sum(p==t[i:i+batchSize])
+
+print("Accuracy : "+str(float(accuracyCount)/len(x)))
+
+```
 
 
 
